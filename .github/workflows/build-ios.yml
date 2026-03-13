@@ -10,15 +10,28 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Clean iOS build
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Clean project
+        run: flutter clean
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Clean iOS Pods
         run: |
-          flutter clean
           rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
-          flutter pub get
-      - name: Install Pods
-        run: |
           cd ios
           pod install --repo-update
+
       - name: Build iOS
         run: flutter build ios --release --no-codesign
     
