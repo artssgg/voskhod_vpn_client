@@ -1,23 +1,49 @@
 name: Build iOS IPA
 
 on:
-push:
-branches:
-- master
-workflow_dispatch:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
-build:
-runs-on: macos-latest
+  build:
+    runs-on: macos-latest
 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-steps:
-  - uses: actions/checkout@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
 
-  - uses: subosito/flutter-action@v2
-    with:
-      channel: stable
+      - name: Flutter version
+        run: flutter --version
 
-  - run: flutter pub get
-  - run: flutter build ios --release --no-codesign
+      - name: Install dependencies
+        run: flutter pub get
 
+      - name: Prepare iOS project
+        run: flutter build ios --config-only
+
+      - name: Build iOS without signing
+        run: |
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO build
+
+      - name: Create IPA
+        run: |
+          mkdir -p build/ios/ipa
+          cp -r build/ios/Release-iphoneos/Runner.app build/ios/ipa/
+          cd build/ios/ipa
+          mkdir Payload
+          mv Runner.app Payload/
+          zip -r voskhod.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: voskhod-ios
+          path: build/ios/ipa/voskhod.ipa
