@@ -32,37 +32,20 @@ jobs:
           cd ios
           pod install --repo-update
 
-      - name: Build IPA
-        run: flutter build ipa --release --no-codesign
-    
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Build iOS app (no signing)
+        run: flutter build ios --release --no-codesign
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Flutter version
-        run: flutter --version
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Clean project
-        run: flutter clean
-
-      - name: Install CocoaPods
+      - name: Create IPA
         run: |
-          cd ios
-          pod install --repo-update
-
-      - name: Build IPA
-        run: flutter build ipa --release --no-codesign
+          mkdir -p build/ios/ipa
+          cp -r build/ios/Release-iphoneos/Runner.app build/ios/ipa/
+          cd build/ios/ipa
+          mkdir Payload
+          mv Runner.app Payload/
+          zip -r voskhod.ipa Payload
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: voskhod-ios
-          path: build/ios/ipa/*.ipa
+          path: build/ios/ipa/voskhod.ipa
