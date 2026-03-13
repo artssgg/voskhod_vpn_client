@@ -8,31 +8,48 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+
     steps:
-      - uses: actions/checkout@v3
-      
+      - name: Clean iOS build
+        run: |
+          flutter clean
+          rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
+          flutter pub get
+      - name: Install Pods
+        run: |
+          cd ios
+          pod install --repo-update
+      - name: Build iOS
+        run: flutter build ios --release --no-codesign
+    
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-      
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
       - name: Install dependencies
         run: flutter pub get
-      
-      - name: Build iOS
-        run: flutter build ios --release --no-codesign
-      
-      - name: Create IPA
+
+      - name: Clean project
+        run: flutter clean
+
+      - name: Install CocoaPods
         run: |
-          mkdir -p build/ios/iphoneos
-          cp -r build/ios/Release-iphoneos/Runner.app build/ios/iphoneos/
-          cd build/ios/iphoneos
-          mkdir Payload
-          mv Runner.app Payload/
-          zip -r app.ipa Payload
-      
+          cd ios
+          pod install --repo-update
+
+      - name: Build IPA
+        run: flutter build ipa --release --no-codesign
+
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: voskhod-ios
-          path: build/ios/iphoneos/app.ipa
+          path: build/ios/ipa/*.ipa
