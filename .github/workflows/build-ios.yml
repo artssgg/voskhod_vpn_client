@@ -30,19 +30,13 @@ jobs:
           cd ios
           pod install --repo-update
 
-      - name: Disable code signing
-        run: |
-          sed -i '' 's/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = "";/g' ios/Runner.xcodeproj/project.pbxproj
-
-      - name: Build iOS without signing
-        run: |
-          cd ios
-          xcodebuild             -workspace Runner.xcworkspace             -scheme Runner             -configuration Release             -sdk iphoneos             CODE_SIGNING_ALLOWED=NO             build
+      - name: Build iOS release (unsigned)
+        run: flutter build ios --release --no-codesign
 
       - name: Create IPA
         run: |
           mkdir -p build/ios/ipa
-          cp -r build/ios/Release-iphoneos/Runner.app build/ios/ipa/
+          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/
           cd build/ios/ipa
           mkdir Payload
           mv Runner.app Payload/
