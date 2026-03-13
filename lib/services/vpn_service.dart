@@ -9,12 +9,13 @@ class VpnService {
   Future<void> initialize() async {
     if (_isInitialized) return;
     _v2ray = FlutterV2ray();
+    // Подписка на статус через stream
     _v2ray.onStatusChanged.listen((status) {
       print('VPN status: $status');
     });
     await _v2ray.initializeVless(
-      providerBundleIdentifier: 'com.example.voskhodVpnClient.VPNProvider',
-      groupIdentifier: 'group.com.example.voskhodVpnClient',
+      providerBundleIdentifier: 'com.example.voskhodVpnClient.VPNProvider', // для iOS
+      groupIdentifier: 'group.com.example.voskhodVpnClient',               // для iOS
     );
     _isInitialized = true;
   }
@@ -50,6 +51,6 @@ class VpnService {
   }
 
   void dispose() {
-    _v2ray.dispose();
+    // метод удалён, так как не требуется
   }
 }
