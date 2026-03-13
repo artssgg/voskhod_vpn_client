@@ -31,8 +31,5 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  # Явно добавляем под Flutter из локальной папки
-  pod 'Flutter', :path => File.join(File.dirname(File.realpath(__FILE__)), 'Flutter')
-
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
