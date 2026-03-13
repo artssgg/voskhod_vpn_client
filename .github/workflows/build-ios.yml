@@ -31,6 +31,10 @@ jobs:
           rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
           cd ios
           pod install --repo-update
+      - name: Disable code signing
+        run: |
+          sed -i '' 's/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = "";/g' ios/Runner.xcodeproj/project.pbxproj
+      
 
       - name: Build iOS app (no signing)
         run: flutter build ios --release --no-codesign
