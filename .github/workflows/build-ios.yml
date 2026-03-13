@@ -11,7 +11,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Flutter
@@ -22,16 +22,22 @@ jobs:
       - name: Flutter version
         run: flutter --version
 
-      - name: Install dependencies
+      - name: Install Flutter dependencies
         run: flutter pub get
 
-      - name: Prepare iOS project
-        run: flutter build ios --config-only
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Disable code signing
+        run: |
+          sed -i '' 's/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = "";/g' ios/Runner.xcodeproj/project.pbxproj
 
       - name: Build iOS without signing
         run: |
           cd ios
-          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO build
+          xcodebuild             -workspace Runner.xcworkspace             -scheme Runner             -configuration Release             -sdk iphoneos             CODE_SIGNING_ALLOWED=NO             build
 
       - name: Create IPA
         run: |
