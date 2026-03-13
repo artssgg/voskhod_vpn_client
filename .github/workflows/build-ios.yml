@@ -9,62 +9,49 @@ workflow_dispatch:
 jobs:
 build:
 runs-on: macos-latest
-
-```
 steps:
-  - name: Checkout
-    uses: actions/checkout@v4
 
-  - name: Setup Flutter
-    uses: subosito/flutter-action@v2
-    with:
-      channel: stable
 
-  - name: Flutter version
-    run: flutter --version
+    - uses: actions/checkout@v4
 
-  - name: Clean project
-    run: flutter clean
+    - uses: subosito/flutter-action@v2
+      with:
+        channel: stable
 
-  - name: Install dependencies
-    run: flutter pub get
+    - run: flutter --version
 
-  - name: Install CocoaPods
-    run: |
-      cd ios
-      pod install --repo-update
+    - run: flutter clean
 
-  - name: Disable code signing
-    run: |
-      sed -i '' 's/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = "";/g' ios/Runner.xcodeproj/project.pbxproj
+    - run: flutter pub get
 
-  - name: Prepare Flutter iOS project
-    run: flutter build ios --config-only
+    - name: Install Pods
+      run: |
+        cd ios
+        pod install --repo-update
 
-  - name: Build iOS without signing
-    run: |
-      cd ios
-      xcodebuild \
-        -workspace Runner.xcworkspace \
-        -scheme Runner \
-        -configuration Release \
-        -sdk iphoneos \
-        CODE_SIGNING_ALLOWED=NO \
-        build
+    - name: Disable signing
+      run: |
+        sed -i '' 's/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = "";/g' ios/Runner.xcodeproj/project.pbxproj
 
-  - name: Create IPA
-    run: |
-      mkdir -p build/ios/ipa
-      cp -r build/ios/Release-iphoneos/Runner.app build/ios/ipa/
-      cd build/ios/ipa
-      mkdir Payload
-      mv Runner.app Payload/
-      zip -r voskhod.ipa Payload
+    - name: Prepare project
+      run: flutter build ios --config-only
 
-  - name: Upload IPA
-    uses: actions/upload-artifact@v4
-    with:
-      name: voskhod-ios
-      path: build/ios/ipa/voskhod.ipa
-```
+    - name: Build app
+      run: |
+        cd ios
+        xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO build
+
+    - name: Create IPA
+      run: |
+        mkdir -p build/ios/ipa
+        cp -r build/ios/Release-iphoneos/Runner.app build/ios/ipa/
+        cd build/ios/ipa
+        mkdir Payload
+        mv Runner.app Payload/
+        zip -r voskhod.ipa Payload
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: voskhod-ios
+        path: build/ios/ipa/voskhod.ipa
 
