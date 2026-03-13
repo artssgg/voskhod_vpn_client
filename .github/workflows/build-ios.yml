@@ -1,62 +1,67 @@
 name: Build iOS IPA
 
 on:
-  push:
-    branches: [ master ]
-  workflow_dispatch:
+push:
+branches: [ master ]
+workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: macos-latest
+build:
+runs-on: macos-latest
 
-    steps:
-      - uses: actions/checkout@v4
+```
+steps:
+  - uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
+  - name: Setup Flutter
+    uses: subosito/flutter-action@v2
+    with:
+      channel: stable
 
-      - name: Flutter version
-        run: flutter --version
+  - name: Flutter version
+    run: flutter --version
 
-      - name: Clean project
-        run: flutter clean
+  - name: Clean project
+    run: flutter clean
 
-      - name: Install dependencies
-        run: flutter pub get
+  - name: Install dependencies
+    run: flutter pub get
 
-      - name: Clean iOS Pods
-        run: |
-          rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
-          cd ios
-          pod install --repo-update
-      - name: Disable code signing
-        run: |
-          sed -i '' 's/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = "";/g' ios/Runner.xcodeproj/project.pbxproj
-      
+  - name: Install CocoaPods
+    run: |
+      cd ios
+      pod install --repo-update
 
-      - name: Build iOS (no signing)
-        run: |
-          flutter build ios --release --no-codesign
-          cd ios
-          xcodebuild -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -sdk iphoneos \
-            CODE_SIGNING_ALLOWED=NO
+  - name: Disable code signing
+    run: |
+      sed -i '' 's/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = "";/g' ios/Runner.xcodeproj/project.pbxproj
 
-      - name: Create IPA
-        run: |
-          mkdir -p build/ios/ipa
-          cp -r build/ios/Release-iphoneos/Runner.app build/ios/ipa/
-          cd build/ios/ipa
-          mkdir Payload
-          mv Runner.app Payload/
-          zip -r voskhod.ipa Payload
+  - name: Prepare Flutter iOS project
+    run: flutter build ios --config-only
 
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: voskhod-ios
-          path: build/ios/ipa/voskhod.ipa
+  - name: Build iOS without signing
+    run: |
+      cd ios
+      xcodebuild \
+        -workspace Runner.xcworkspace \
+        -scheme Runner \
+        -configuration Release \
+        -sdk iphoneos \
+        CODE_SIGNING_ALLOWED=NO \
+        build
+
+  - name: Create IPA
+    run: |
+      mkdir -p build/ios/ipa
+      cp -r build/ios/Release-iphoneos/Runner.app build/ios/ipa/
+      cd build/ios/ipa
+      mkdir Payload
+      mv Runner.app Payload/
+      zip -r voskhod.ipa Payload
+
+  - name: Upload IPA
+    uses: actions/upload-artifact@v4
+    with:
+      name: voskhod-ios
+      path: build/ios/ipa/voskhod.ipa
+```
